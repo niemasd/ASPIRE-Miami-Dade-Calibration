@@ -44,6 +44,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--output', required=True, type=str, help="Output Directory")
     parser.add_argument('-x', '--input_xlsx', required=True, type=str, help="Input abm_hiv-HRSA_SD Parameter XLSX File")
+    parser.add_argument('-d', '--input_demographics_csv', required=True, type=str, help="Input abm_hiv-HRSA_SD Demographics CSV File")
     parser.add_argument('--scipy_minimize_method', required=False, type=str, default='Powell', help="SciPy Minimize Optimization Method (options: %s)" % ', '.join(sorted(SCIPY_MINIMIZE_METHODS)))
     parser.add_argument('--zip_output', action='store_true', help="Zip Output Files")
     parser.add_argument('--path_abm_hiv_commandline', required=False, type=str, default=DEFAULT_PATH_ABM_HIV_COMMANDLINE, help="Path to abm_hiv-HRSA_SD/abm_hiv_commandline.R")
@@ -53,6 +54,7 @@ def parse_args():
     # process args
     args.output = Path(args.output)
     args.input_xlsx = Path(args.input_xlsx).expanduser().absolute()
+    args.input_demographics_csv = Path(args.input_demographics_csv).expanduser().absolute()
     args.scipy_minimize_method = args.scipy_minimize_method.strip()
     args.path_abm_hiv_commandline = Path(args.path_abm_hiv_commandline).expanduser().absolute()
     args.path_abm_hiv_modules = Path(args.path_abm_hiv_modules).expanduser().absolute()
@@ -60,7 +62,7 @@ def parse_args():
     # check args
     if args.output.exists():
         raise ValueError("Output exists: %s" % args.output)
-    for p in [args.input_xlsx, args.path_abm_hiv_commandline]:
+    for p in [args.input_xlsx, args.input_demographics_csv, args.path_abm_hiv_commandline]:
         if not p.is_file():
             raise ValueError("File not found: %s" % p)
     for p in [args.path_abm_hiv_modules]:
@@ -77,6 +79,7 @@ if __name__ == "__main__":
     print_log("===== RUN INFORMATION =====")
     print_log("Calibration command: %s" % ' '.join(argv))
     print_log("Original abm_hiv-HRSA_SD Parameter XLSX: %s" % args.input_xlsx)
+    print_log("abm_hiv-HRSA_SD Demographics CSV: %s" % args.input_demographics_csv)
     copy(args.input_xlsx, args.output / 'input.xlsx')
     print_log()
 
