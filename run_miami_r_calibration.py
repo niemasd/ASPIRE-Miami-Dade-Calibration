@@ -72,7 +72,9 @@ def parse_args():
 
 # run ABM R code
 def run_abm_hiv_r(out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv, abm_hiv_trans_start=0.25, abm_hiv_trans_end=0.5, abm_hiv_trans_time=25, path_abm_hiv_commandline=DEFAULT_PATH_ABM_HIV_COMMANDLINE, path_abm_hiv_modules=DEFAULT_PATH_ABM_HIV_MODULES):
-    command = ['Rscript', path_abm_hiv_commandline, path_abm_hiv_modules, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv, str(abm_hiv_trans_start), str(abm_hiv_trans_end), str(abm_hiv_trans_time)]
+    out_path.mkdir(parents=True, exist_ok=True)
+    command = ['Rscript', path_abm_hiv_commandline, path_abm_hiv_modules, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv, abm_hiv_trans_start, abm_hiv_trans_end, abm_hiv_trans_time]
+    command = [str(x) for x in command] # convert to str
     print_log("Running abm_hiv-HRSA_SD Command: %s" % ' '.join(command))
     log_f = open(out_path / DEFAULT_FN_ABM_HIV_LOG, 'wt')
     log_f.write("=== ABM STDERR ===\n"); log_f.flush()
@@ -102,6 +104,7 @@ if __name__ == "__main__":
     print_log("===== CALIBRATION =====")
     print_log("SciPy Optimize Calibration Method: %s" % args.scipy_minimize_method)
     print_log("Running calibration...")
+    run_abm_hiv_r(args.output / 'test_run', args.input_xlsx, args.input_demographics_csv) # TODO DELETE AND MOVE TO WITHIN CALIBRATION
     pass # TODO RUN CALIBRATION
     if args.zip_output:
         print_log("Zipping output...")
