@@ -70,6 +70,15 @@ def parse_args():
             raise ValueError("Directory not found: %s" % p)
     return args
 
+# run ABM R code
+def run_abm_hiv_r(out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv, abm_hiv_trans_start=0.25, abm_hiv_trans_end=0.5, abm_hiv_trans_time=25, path_abm_hiv_commandline=DEFAULT_PATH_ABM_HIV_COMMANDLINE, path_abm_hiv_modules=DEFAULT_PATH_ABM_HIV_MODULES):
+    command = ['Rscript', path_abm_hiv_commandline, path_abm_hiv_modules, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv, str(abm_hiv_trans_start), str(abm_hiv_trans_end), str(abm_hiv_trans_time)]
+    print_log("Running abm_hiv-HRSA_SD Command: %s" % ' '.join(command))
+    log_f = open(out_path / DEFAULT_FN_ABM_HIV_LOG, 'wt')
+    log_f.write("=== ABM STDERR ===\n"); log_f.flush()
+    abm_out = check_output(command, stderr=log_f).decode(); log_f.flush()
+    log_f.write("\n\n=== ABM STDOUT ===\n"); log_f.write(abm_out); log_f.close()
+
 # main execution
 if __name__ == "__main__":
     # set things up
