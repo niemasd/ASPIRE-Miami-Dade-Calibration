@@ -53,11 +53,11 @@ def parse_args():
 
     # process args
     args.output = Path(args.output)
-    args.input_xlsx = Path(args.input_xlsx).expanduser().absolute()
-    args.input_demographics_csv = Path(args.input_demographics_csv).expanduser().absolute()
+    args.input_xlsx = Path(args.input_xlsx).expanduser().resolve()
+    args.input_demographics_csv = Path(args.input_demographics_csv).expanduser().resolve()
     args.scipy_minimize_method = args.scipy_minimize_method.strip()
-    args.path_abm_hiv_commandline = Path(args.path_abm_hiv_commandline).expanduser().absolute()
-    args.path_abm_hiv_modules = Path(args.path_abm_hiv_modules).expanduser().absolute()
+    args.path_abm_hiv_commandline = Path(args.path_abm_hiv_commandline).expanduser().resolve()
+    args.path_abm_hiv_modules = Path(args.path_abm_hiv_modules).expanduser().resolve()
 
     # check args
     if args.output.exists():
@@ -78,9 +78,15 @@ if __name__ == "__main__":
     LOGFILE = open(args.output / DEFAULT_FN_LOG, 'wt')
     print_log("===== RUN INFORMATION =====")
     print_log("Calibration command: %s" % ' '.join(argv))
-    print_log("Original abm_hiv-HRSA_SD Parameter XLSX: %s" % args.input_xlsx)
-    print_log("abm_hiv-HRSA_SD Demographics CSV: %s" % args.input_demographics_csv)
-    copy(args.input_xlsx, args.output / 'input.xlsx')
+    print_log("Input abm_hiv-HRSA_SD Parameter XLSX: %s" % args.input_xlsx)
+    print_log("Input abm_hiv-HRSA_SD Demographics CSV: %s" % args.input_demographics_csv)
+
+    # copy input files to output directory
+    input_copy_dir = args.output / 'inputs'
+    input_copy_dir.mkdir()
+    print_log("Copying input files to: %s" % input_copy_dir)
+    for p in [args.input_xlsx, args.input_demographics_csv]:
+        copy(p, input_copy_dir / p.name)
     print_log()
 
     # run calibration
