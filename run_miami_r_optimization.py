@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-Run the Miami-Dade county R code calibration
+Run the Miami-Dade county R code optimization (minimize number of new infections in last 5 years of simulation)
 '''
 
 # imports
