@@ -28,6 +28,7 @@ DEFAULT_NUM_REPS_PER_SCORE = 5
 DEFAULT_MAX_NUM_THREADS = cpu_count()
 DEFAULT_SCORE_NUM_YEARS = 5
 DEFAULT_SCORE_FUNCTION = 'mean'
+DEFAULT_SCIPY_MINIMIZE_METHOD = 'SLSQP'
 DEFAULT_PATH_ABM_HIV_COMMANDLINE = "/usr/local/bin/abm_hiv-HRSA_SD/abm_hiv_commandline.R"
 DEFAULT_PATH_ABM_HIV_MODULES = "/usr/local/bin/abm_hiv-HRSA_SD/modules"
 DEFAULT_FN_ABM_HIV_LOG = "log_abm_hiv.txt"
@@ -60,7 +61,7 @@ def parse_args():
     parser.add_argument('-t', '--max_num_threads', required=False, type=int, default=DEFAULT_MAX_NUM_THREADS, help="Max Number of Threads to Use")
     parser.add_argument('--score_num_years', required=False, type=float, default=DEFAULT_SCORE_NUM_YEARS, help="Number of Years Before End of Simulation to Count Transmissions")
     parser.add_argument('--score_function', required=False, type=str, default=DEFAULT_SCORE_FUNCTION, help="Function to Calculate Overall Score from Replicates (options: %s)" % ', '.join(sorted(SCORE_FUNCTIONS.keys())))
-    parser.add_argument('--scipy_minimize_method', required=False, type=str, default='Powell', help="SciPy Minimize Optimization Method (options: %s)" % ', '.join(sorted(SCIPY_MINIMIZE_METHODS)))
+    parser.add_argument('--scipy_minimize_method', required=False, type=str, default=DEFAULT_SCIPY_MINIMIZE_METHOD, help="SciPy Minimize Optimization Method (options: %s)" % ', '.join(sorted(SCIPY_MINIMIZE_METHODS)))
     parser.add_argument('--zip_output', action='store_true', help="Zip Output Files")
     parser.add_argument('--path_abm_hiv_commandline', required=False, type=str, default=DEFAULT_PATH_ABM_HIV_COMMANDLINE, help="Path to abm_hiv-HRSA_SD/abm_hiv_commandline.R")
     parser.add_argument('--path_abm_hiv_modules', required=False, type=str, default=DEFAULT_PATH_ABM_HIV_MODULES, help="Path to abm_hiv-HRSA_SD/modules")
@@ -104,6 +105,7 @@ def run_optimization(
     optimization_mode, out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv,
     abm_hiv_trans_start=0.25, abm_hiv_trans_end=0.5, abm_hiv_trans_time=25,
     score_num_years=DEFAULT_SCORE_NUM_YEARS, score_func=SCORE_FUNCTIONS[DEFAULT_SCORE_FUNCTION],
+    scipy_minimize_method=DEFAULT_SCIPY_MINIMIZE_METHOD,
     num_reps_per_score=DEFAULT_NUM_REPS_PER_SCORE, max_num_threads=DEFAULT_MAX_NUM_THREADS,
     path_abm_hiv_commandline=DEFAULT_PATH_ABM_HIV_COMMANDLINE, path_abm_hiv_modules=DEFAULT_PATH_ABM_HIV_MODULES
     ):
@@ -170,7 +172,7 @@ def run_optimization(
             transmission_counts.append(sum(1 for u, v, t in transmissions if float(t) > month_threshold))
         print_log("  - Transmission counts: %s" % str(transmission_counts))
         return score_func(transmission_counts)
-    return minimize(opt_fun, x0, constraints=[linear_constraint])
+    return minimize(opt_fun, x0, bounds=bounds, constraints=[linear_constraint], method=scipy_minimize_method)
 
 # main execution
 if __name__ == "__main__":
@@ -198,6 +200,7 @@ if __name__ == "__main__":
     results = run_optimization(
         args.optimization_mode, args.output / 'simulations', args.input_xlsx, args.input_demographics_csv,
         score_num_years=args.score_num_years, score_func=SCORE_FUNCTIONS[args.score_function],
+        scipy_minimize_method=args.scipy_minimize_method,
         num_reps_per_score=args.num_reps_per_score, max_num_threads=args.max_num_threads,
         path_abm_hiv_commandline=args.path_abm_hiv_commandline, path_abm_hiv_modules=args.path_abm_hiv_modules,
     )
