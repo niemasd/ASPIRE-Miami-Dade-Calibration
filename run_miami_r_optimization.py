@@ -26,6 +26,7 @@ SCORE_FUNCTIONS = {'mean': mean, 'max': max, 'min': min}
 # defaults
 DEFAULT_NUM_REPS_PER_SCORE = 5
 DEFAULT_MAX_NUM_THREADS = cpu_count()
+DEFAULT_SCORE_NUM_YEARS = 5
 DEFAULT_SCORE_FUNCTION = 'mean'
 DEFAULT_PATH_ABM_HIV_COMMANDLINE = "/usr/local/bin/abm_hiv-HRSA_SD/abm_hiv_commandline.R"
 DEFAULT_PATH_ABM_HIV_MODULES = "/usr/local/bin/abm_hiv-HRSA_SD/modules"
@@ -57,6 +58,7 @@ def parse_args():
     parser.add_argument('-m', '--optimization_mode', required=True, type=str, help="Optimization Mode (options: %s)" % ', '.join(sorted(OPTIMIZATION_MODES)))
     parser.add_argument('-n', '--num_reps_per_score', required=False, type=int, default=DEFAULT_NUM_REPS_PER_SCORE, help="Number of Simulation Replicates per Score")
     parser.add_argument('-t', '--max_num_threads', required=False, type=int, default=DEFAULT_MAX_NUM_THREADS, help="Max Number of Threads to Use")
+    parser.add_argument('--score_num_years', required=False, type=float, default=DEFAULT_SCORE_NUM_YEARS, help="Number of Years Before End of Simulation to Count Transmissions")
     parser.add_argument('--score_function', required=False, type=str, default=DEFAULT_SCORE_FUNCTION, help="Function to Calculate Overall Score from Replicates (options: %s)" % ', '.join(sorted(SCORE_FUNCTIONS.keys())))
     parser.add_argument('--scipy_minimize_method', required=False, type=str, default='Powell', help="SciPy Minimize Optimization Method (options: %s)" % ', '.join(sorted(SCIPY_MINIMIZE_METHODS)))
     parser.add_argument('--zip_output', action='store_true', help="Zip Output Files")
@@ -85,6 +87,8 @@ def parse_args():
         raise ValueError("Number of simulation replicates per score must be positive: %d" % args.num_reps_per_score)
     if args.max_num_threads < 1:
         raise ValueError("Maximum number of threads must be positive: %d" % args.max_num_threads)
+    if args.score_num_years <= 0:
+        raise ValueError("Number of years before end of simulation to score must be positive: %s" % args.score_num_years)
     if args.output.exists():
         raise ValueError("Output exists: %s" % args.output)
     for p in [args.input_xlsx, args.input_demographics_csv, args.path_abm_hiv_commandline]:
@@ -99,7 +103,8 @@ def parse_args():
 def run_optimization(
     mode, out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv,
     abm_hiv_trans_start=0.25, abm_hiv_trans_end=0.5, abm_hiv_trans_time=25,
-    num_reps_per_score=DEFAULT_NUM_REPS_PER_SCORE, max_num_threads=DEFAULT_MAX_NUM_THREADS, score_func=SCORE_FUNCTIONS[DEFAULT_SCORE_FUNCTION],
+    score_num_years=DEFAULT_SCORE_NUM_YEARS, score_func=SCORE_FUNCTIONS[DEFAULT_SCORE_FUNCTION],
+    num_reps_per_score=DEFAULT_NUM_REPS_PER_SCORE, max_num_threads=DEFAULT_MAX_NUM_THREADS,
     path_abm_hiv_commandline=DEFAULT_PATH_ABM_HIV_COMMANDLINE, path_abm_hiv_modules=DEFAULT_PATH_ABM_HIV_MODULES
     ):
     # prep optimization parameters
@@ -189,7 +194,8 @@ if __name__ == "__main__":
     print_log("Running optimization...")
     results = run_optimization(
         args.optimization_mode, args.output / 'simulations', args.input_xlsx, args.input_demographics_csv,
-        num_reps_per_score=args.num_reps_per_score, max_num_threads=args.max_num_threads, score_func=SCORE_FUNCTIONS[args.score_function],
+        score_num_years=args.score_num_years, score_func=SCORE_FUNCTIONS[args.score_function],
+        num_reps_per_score=args.num_reps_per_score, max_num_threads=args.max_num_threads,
         path_abm_hiv_commandline=args.path_abm_hiv_commandline, path_abm_hiv_modules=args.path_abm_hiv_modules,
     )
     print_log("Best parameters: %s" % str(results.x))
