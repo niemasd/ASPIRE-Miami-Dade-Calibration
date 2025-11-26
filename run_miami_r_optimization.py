@@ -101,24 +101,24 @@ def parse_args():
 
 # perform R code optimization
 def run_optimization(
-    mode, out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv,
+    optimization_mode, out_path, abm_hiv_params_xlsx, abm_hiv_sd_demographics_csv,
     abm_hiv_trans_start=0.25, abm_hiv_trans_end=0.5, abm_hiv_trans_time=25,
     score_num_years=DEFAULT_SCORE_NUM_YEARS, score_func=SCORE_FUNCTIONS[DEFAULT_SCORE_FUNCTION],
     num_reps_per_score=DEFAULT_NUM_REPS_PER_SCORE, max_num_threads=DEFAULT_MAX_NUM_THREADS,
     path_abm_hiv_commandline=DEFAULT_PATH_ABM_HIV_COMMANDLINE, path_abm_hiv_modules=DEFAULT_PATH_ABM_HIV_MODULES
     ):
     # prep optimization parameters
-    if mode == 'geo':
+    if optimization_mode == 'geo':
         top_row = 12
         num_cells = 13
-    elif mode == 'risk':
+    elif optimization_mode == 'risk':
         top_row = 27
         num_cells = 4
-    elif mode == 'race':
+    elif optimization_mode == 'race':
         top_row = 33
         num_cells = 3
     else:
-        raise ValueError("Invalid optimization mode (%s). Options: %s" % (mode, ', '.join(sorted(OPTIMIZATION_MODES))))
+        raise ValueError("Invalid optimization mode (%s). Options: %s" % (optimization_mode, ', '.join(sorted(OPTIMIZATION_MODES))))
     x0 = [1./num_cells] * num_cells
     bounds = [(0,1)] * num_cells
     linear_constraint = LinearConstraint([[1]*num_cells], 1, 1)
@@ -128,7 +128,8 @@ def run_optimization(
     def opt_fun(x):
         # prep ABM R code run
         nonlocal iter_num; iter_num += 1
-        print_log("Preparing ABM iteration %d..." % iter_num)
+        print_log("- ABM Iteration %d" % iter_num)
+        print_log("  - Preparing simulations...")
         curr_out_path = out_path / ('optimization.iteration.%s' % str(iter_num).zfill(3))
         curr_out_path.mkdir(parents=True)
         rep_nums = [str(i).zfill(3) for i in range(1, num_reps_per_score+1)]
@@ -139,6 +140,7 @@ def run_optimization(
             data_xlsx_copy_path = curr_out_path / ('rep.%s.data.xlsx' % rep_num)
             wb = load_workbook(abm_hiv_params_xlsx, data_only=True) # load original XLSX
             wb['High Level Pop + Sim Features']['B4'] = rng_seed_base + int(rep_num) # override RNG seed
+            wb['Testing']['D7'] = optimization_mode
             for i in range(num_cells):
                 wb['Testing']['M%d' % (top_row+i)] = x[i]
             for ws in wb.worksheets:
@@ -155,17 +157,18 @@ def run_optimization(
             '>', str(curr_out_path / 'rep.{}.log.txt'), '2>&1',
         ]
         command += [':::'] + rep_nums
-        print_log("Running ABM iteration %d: %s" % (iter_num, ' '.join("'%s'" % c for c in command)))
+        print_log("  - Running simulations: %s" % ' '.join("'%s'" % c for c in command))
         run(command)
 
         # compute score from outputs
         transmission_counts = list()
         for rep_num in rep_nums:
             with open(curr_out_path / ('rep.%s.log.txt' % rep_num), 'rt') as f:
-                transmissions = [[x.strip() for x in l.strip().split()] for l in f.read().split('[1] "Transmission tree..."')[1].split('[1] "Sequence sample times..."').strip().splitlines()]
-            end_month = max(t for u, v, t in transmissions)
+                transmissions = [[x.strip() for x in l.strip().split()] for l in f.read().split('[1] "Transmission tree..."')[1].split('[1] "Sequence sample times..."')[0].strip().splitlines()][1:]
+            end_month = max(float(t) for u, v, t in transmissions)
             month_threshold = end_month - (12*score_num_years)
-            transmission_counts.append(sum(1 for u, v, t in transmissions if t > month_threshold))
+            transmission_counts.append(sum(1 for u, v, t in transmissions if float(t) > month_threshold))
+        print_log("  - Transmission counts: %s" % str(transmission_counts))
         return score_func(transmission_counts)
     return minimize(opt_fun, x0, constraints=[linear_constraint])
 
