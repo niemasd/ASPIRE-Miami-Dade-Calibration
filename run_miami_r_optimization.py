@@ -69,13 +69,13 @@ def parse_args():
 
     # process args
     args.output = Path(args.output)
-    args.input_xlsx = Path(args.input_xlsx).expanduser().resolve()
-    args.input_demographics_csv = Path(args.input_demographics_csv).expanduser().resolve()
+    args.input_xlsx = Path(args.input_xlsx).expanduser()
+    args.input_demographics_csv = Path(args.input_demographics_csv).expanduser()
     args.optimization_mode = args.optimization_mode.strip().lower()
     args.score_function = args.score_function.strip().lower()
     args.scipy_minimize_method = args.scipy_minimize_method.strip()
-    args.path_abm_hiv_commandline = Path(args.path_abm_hiv_commandline).expanduser().resolve()
-    args.path_abm_hiv_modules = Path(args.path_abm_hiv_modules).expanduser().resolve()
+    args.path_abm_hiv_commandline = Path(args.path_abm_hiv_commandline).expanduser()
+    args.path_abm_hiv_modules = Path(args.path_abm_hiv_modules).expanduser()
 
     # check args
     if args.optimization_mode not in OPTIMIZATION_MODES:
