@@ -19,7 +19,7 @@ import argparse
 # constants
 LOGFILE = None
 MAX_RNG_SEED = 99999
-SCIPY_MINIMIZE_METHODS = {'Nelder-Mead', 'L-BFGS-B', 'TNC', 'SLSQP', 'Powell', 'trust-constr', 'COBYLA', 'COBYQA'}
+SCIPY_MINIMIZE_METHODS = {'SLSQP', 'trust-constr', 'COBYLA', 'COBYQA'}
 OPTIMIZATION_MODES = {'geo', 'risk', 'race'}
 SCORE_FUNCTIONS = {'mean': mean, 'max': max, 'min': min}
 
