@@ -143,8 +143,11 @@ def run_optimization(
             wb = load_workbook(abm_hiv_params_xlsx, data_only=True) # load original XLSX
             wb['High Level Pop + Sim Features']['B4'] = rng_seed_base + int(rep_num) # override RNG seed
             wb['Testing']['D7'] = optimization_mode
+            d5_val = wb['Testing']['D5'].value
             for i in range(num_cells):
                 wb['Testing']['M%d' % (top_row+i)] = x[i]
+                if d5_val is not None:
+                    wb['Testing']['N%d' % (top_row+i)] = x[i] * float(d5_val)
             for ws in wb.worksheets:
                 for row in ws:
                     for cell in row:
